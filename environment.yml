@@ -1,0 +1,35 @@
+name: systematic_trading
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ---- core python ----
+  - python=3.11
+  - pip
+
+  # ---- numerical + data analysis ----
+  - numpy>=1.26
+  - pandas>=2.2
+  - scipy
+  - statsmodels
+
+  # ---- plotting (optional for debugging / figures) ----
+  - matplotlib
+  - seaborn
+
+  # ---- development / reproducibility ----
+  - ipykernel
+  - jupyterlab
+  - tqdm
+  - pyarrow
+
+  # ---- optional finance utils ----
+  - yfinance
+  - ta-lib  # for any future technical indicators
+  - requests
+
+  # ---- pip-only installs ----
+  - pip:
+      - empyrical
+      - alphalens-reloaded
