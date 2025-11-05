@@ -5,6 +5,7 @@ from pathlib import Path
 
 PRICES_CSV = Path("Systematic-Trading-main/data/prices_daily.csv")
 SIGNALS_CSV = Path("Systematic-Trading-main/output/signals/signals_12m_minus_1_latest.csv")
+SIGNALS_CSV_MH = Path("Systematic-Trading-main/output/signals/signals_multi_horizon_20251030_170800.csv") 
 
 OUT_VOL = Path("Systematic-Trading-main/output/vol_ewma_annualized.csv")
 OUT_BEFORE = Path("Systematic-Trading-main/output/weights_before_caps.csv")
@@ -122,7 +123,9 @@ prices = load_prices_wide(PRICES_CSV)
 vol = compute_ewma_vol_annual(prices, ALPHA, ANNUAL_DAYS)
 signals = load_signals_long_to_wide(SIGNALS_CSV)
 signals, vol = align_signals_and_vol(signals, vol)
-rets = prices.pct_change().fillna(0.0)
+
+rets = prices.pct_change()
+rets = rets.reindex(index=signals.index, columns=signals.columns).fillna(0.0)
 mean_ew = rets.ewm(alpha = ALPHA_COV, adjust = False).mean()
 resid = (rets - mean_ew).fillna(0.0)
 
@@ -136,7 +139,7 @@ rows_bef, rows_aft = [], []
 prev = pd.Series(0.0, index = signals.columns)
 
 for dt in signals.index:
-    Sigma_df = cov_all.loc[dt].reindex(index=signals.columns, columns=signals.columns).fillna(0.0)
+    Sigma_df = cov_all.xs(dt, level=0).reindex(index=signals.columns, columns=signals.columns).fillna(0.0)
     Sigma_t = Sigma_df.values
 
     w0 = w_pre.loc[dt].fillna(0.0).values
@@ -149,9 +152,7 @@ for dt in signals.index:
         w_scaled = np.zeros_like(w0) 
 
     w_before = pd.Series(w_scaled, index = signals.columns, name = dt)
-
     w_capped = apply_per_fund_cap(w_before, PER_FUND_CAP)
-    
     w_after = pd.Series(index = w_capped.index, name = dt)
 
     for ticker in w_capped.index:
@@ -167,3 +168,4 @@ for dt in signals.index:
 
 pd.DataFrame(rows_bef).to_csv(OUT_BEFORE_W2)
 pd.DataFrame(rows_aft).to_csv(OUT_AFTER_W2)
+
