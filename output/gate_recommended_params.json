@@ -1,0 +1,10 @@
+{
+  "sensitivity": 0.75,
+  "smooth_window": 10,
+  "validation_sharpe": 0.8900011077382933,
+  "test_sharpe": 0.38488436534716436,
+  "validation_drawdown": 0.018506018423617765,
+  "test_drawdown": 0.045209412791914205,
+  "validation_turnover": 0.6339091464898632,
+  "test_turnover": 0.5548131866420919
+}
