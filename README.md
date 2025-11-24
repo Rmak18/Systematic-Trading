@@ -1,2 +1,0 @@
-# Systematic-Trading
-Temp description
