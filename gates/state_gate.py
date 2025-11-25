@@ -92,6 +92,8 @@ class TreeNode:
     split: Optional[Split] = None
     left: Optional['TreeNode'] = None
     right: Optional['TreeNode'] = None
+
+    
     nll: Optional[float] = None
 
 
@@ -344,20 +346,23 @@ def plot_regimes(yields_df: pd.DataFrame, regimes_df: pd.DataFrame, out_png: Opt
         plt.plot(dates, np.zeros_like(r), linewidth=1.5)
 
     unique_regs = np.unique(r)
-    for reg in unique_regs:
+    colors = ['red', 'blue', 'green', 'orange', 'purple']  # Different color per regime
+    for reg_idx, reg in enumerate(unique_regs):
         mask = (r == reg)
         start = None
+        color = colors[reg_idx % len(colors)]
         for i, m in enumerate(mask):
             if m and start is None:
                 start = i
             if (not m or i == len(mask) - 1) and start is not None:
                 end = i if not m else i
-                plt.axvspan(dates[start], dates[end], alpha=0.1)
+                plt.axvspan(dates[start], dates[end], alpha=0.2, color=color, label=f'Regime {reg}' if start == np.where(mask)[0][0] else '')
                 start = None
 
     plt.title("US Treasury Yield & State Gate Regimes")
     plt.xlabel("Date")
     plt.ylabel(y_label)
+    plt.legend(loc='upper right')
     plt.tight_layout()
     if out_png:
         plt.savefig(out_png, dpi=150)
@@ -413,14 +418,16 @@ def run_demo(yields_csv: str,
 
         regime_vols[regime_id] = vol
 
-    # Calculate scales: inverse of relative volatility
-    # Lower volatility → higher scale (can size up positions)
-    # Higher volatility → lower scale (reduce positions)
-    mean_vol = np.mean(list(regime_vols.values()))
+    # Calculate scales: normalize to lowest volatility regime
+    # Lowest volatility → scale 1.0 (full position)
+    # Higher volatility → scale < 1.0 (reduce positions)
+    min_vol = min(regime_vols.values())
 
     for regime_id, vol in regime_vols.items():
-        # Scale inversely with volatility, clip to reasonable range
-        scale = np.clip(mean_vol / vol, 0.3, 1.5)
+        # Scale inversely with volatility, capped at 1.0 (no leverage)
+        scale = min_vol / vol
+        # Floor at 0.2 (never go below 20% position)
+        scale = np.clip(scale, 0.2, 1.0)
         regime_scales[regime_id] = float(scale)
 
     # Add Scale column to regimes
